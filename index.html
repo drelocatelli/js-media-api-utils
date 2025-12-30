@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      function load(ms) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, ms);
+        });
+      }
+    </script>
+
+    <div id="audioRecorder">
+      <h1>Audio Recorder</h1>
+      <hr />
+
+      <button id="start">Start</button>
+      <button id="stop">Stop</button>
+      <audio id="audioPlayer" controls></audio>
+
+      <script src="AudioRecorder.js"></script>
+      <script id="#audioRecorderScript">
+        const recorder = new AudioRecorder();
+
+        const recorderBtns = {
+          start: document.querySelector('#audioRecorder #start'),
+          stop: document.querySelector('#audioRecorder #stop'),
+        };
+
+        console.log({ recorderBtns });
+
+        recorderBtns.start.addEventListener('click', () => {
+          recorder.startRecording();
+        });
+
+        recorderBtns.stop.addEventListener('click', () => {
+          recorder.stopRecording();
+        });
+
+        recorder.onDataAvailable = (data) => {
+          console.log(data);
+          const audioPlayer = document.querySelector('audio#audioPlayer');
+          audioPlayer.src = data.audioURL;
+        };
+      </script>
+    </div>
+
+    <div id="fileUploader">
+      <h1>File Upload</h1>
+      <hr />
+      <input type="file" id="fileInput" />
+
+      <div id="preview">
+        <p>Nome: <span id="infoName"></span></p>
+        <p>Tipo: <span id="infoType"></span></p>
+        <img id="imagePreview" style="max-width: 200px; display: none" />
+      </div>
+
+      <script src="FileUpload.js"></script>
+      <script id="fileUploadScript">
+        const fileHandler = new FileUpload();
+
+        const elements = {
+          fileInput: document.querySelector('#fileUploader #fileInput'),
+          infoName: document.querySelector('#fileUploader #infoName'),
+          infoType: document.querySelector('#fileUploader #infoType'),
+          imagePreview: document.querySelector('#fileUploader #imagePreview'),
+        };
+
+        elements.fileInput.addEventListener('change', (e) => {
+          fileHandler.handleFileChange(e);
+        });
+
+        fileHandler.onFileLoaded = (data) => {
+          elements.infoName.textContent = data.fileName + '.' + data.fileExtension;
+          elements.infoType.textContent = data.fileType;
+          elements.imagePreview.src = data.fileUrl;
+          elements.imagePreview.style.display = 'block';
+        };
+      </script>
+    </div>
+
+    <div id="geoLocation">
+      <h1>GeoLocation</h1>
+      <hr />
+
+      <button id="btnGetLocation">Minha localização</button>
+
+      <div id="display">
+        <p>Latitude: <span id="lat"></span></p>
+        <p>Longitude: <span id="lng"></span></p>
+      </div>
+
+      <script src="GeoLocation.js"></script>
+      <script id="geoLocationScript">
+        const geo = new GeoLocationHandler();
+
+        const geoBtn = document.querySelector('#geoLocation #btnGetLocation');
+        const geoElements = {
+          lat: document.querySelector('#geoLocation #lat'),
+          lng: document.querySelector('#geoLocation #lng'),
+        };
+
+        geoBtn.addEventListener('click', async () => {
+          geoBtn.innerHTML = 'Localizando...';
+          load(1000);
+          geo.requestLocation();
+        });
+
+        geo.onLocationReceived = (position) => {
+          geoBtn.innerHTML = 'Minha localização';
+          geoElements.lat.textContent = position.coords.latitude;
+          geoElements.lng.textContent = position.coords.longitude;
+        };
+      </script>
+    </div>
+
+    <div id="notificationContainer">
+      <h1>Notification Push</h1>
+      <hr />
+
+      <button id="btnRequestNot">Pedir permissão</button>
+      <button id="btnSendNot">Enviar notificação</button>
+
+      <script src="Notification.js"></script>
+      <script id="notificationhandler">
+        const notifier = new NotificationHandler();
+
+        const notElements = {
+          btnRequestNot: document.querySelector('#notificationContainer #btnRequestNot'),
+          btnSendNot: document.querySelector('#notificationContainer #btnSendNot'),
+        };
+
+        notElements.btnRequestNot.addEventListener('click', async () => {
+          const permission = await notifier.requestNotifications();
+          console.log(permission);
+        });
+
+        notElements.btnSendNot.addEventListener('click', () => {
+          notifier.sendNotification('Notificação enviada', {
+            body: 'Corpo da notificação',
+            icon: 'https://cdn-icons-png.flaticon.com/512/3119/3119338.png',
+          });
+        });
+      </script>
+    </div>
+
+    <div id="videoContainer">
+      <h1>Video Recorder</h1>
+      <hr />
+
+      <video id="preview" width="400" height="300" style="background: #000"></video>
+
+      <div class="controls" style="margin: 10px 0">
+        <button id="btnStart">Gravar</button>
+        <button id="btnStop" disabled>Parar</button>
+      </div>
+
+      <h3>Resultado:</h3>
+      <video id="playback" width="400" height="300" controls></video>
+    </div>
+
+    <script src="VideoRecorder.js"></script>
+    <script>
+      const videoManager = new VideoRecorder();
+
+      const btnStart = document.getElementById('btnStart');
+      const btnStop = document.getElementById('btnStop');
+      const previewEl = document.getElementById('preview');
+      const playbackEl = document.getElementById('playback');
+
+      // Iniciar
+      btnStart.addEventListener('click', async () => {
+        await videoManager.startRecording();
+        await videoManager.showPreview(previewEl); // Mostra no elemento de preview
+
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+      });
+
+      // Parar
+      btnStop.addEventListener('click', () => {
+        videoManager.stopRecording();
+
+        // Limpa o preview ao parar
+        previewEl.srcObject = null;
+
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+      });
+
+      // Quando o arquivo de vídeo for gerado
+      videoManager.onVideoReady = (url) => {
+        playbackEl.src = url;
+        console.log('Vídeo disponível em:', url);
+      };
+    </script>
+  </body>
+</html>
